@@ -1,24 +1,23 @@
 package burp;
 
-import javax.swing.*;
-import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
+import javax.swing.*;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
 
 import static burp.Constants.*;
 
-public class BurpExtender implements IBurpExtender, IScannerCheck, ITab
-{
+public class BurpExtender implements IBurpExtender, IScannerCheck, ITab {
     public static final String PLUGIN_NAME = "Reflector";
     private IBurpExtenderCallbacks callbacks;
     private IExtensionHelpers helpers;
     private static final String DESCRIPTION_DETAILS = "Reflected parameters in ";
-    private static final String XSS_POSSIBLE = "XSS (possible)";
-    private static final String XSS_VULNERABLE= "XSS (vulnerable)";
+    private static final String XSS_POSSIBLE = "rXSS (possible)";
+    private static final String XSS_VULNERABLE = "rXSS";
     public static final String ALLOWED_CONTENT_TYPE = "Allowed Content-Type";
     public static final String DELETE = "Delete";
     public static final String ADD = "Add";
@@ -37,12 +36,12 @@ public class BurpExtender implements IBurpExtender, IScannerCheck, ITab
     private JCheckBox checkContext;
     private Settings settings;
     private String issueName = XSS_POSSIBLE;
+    private String issueSeverity = "Low";
 
     private CheckReflection checkReflection;
 
     @Override
-    public void registerExtenderCallbacks(final IBurpExtenderCallbacks callbacks)
-    {
+    public void registerExtenderCallbacks(final IBurpExtenderCallbacks callbacks) {
         // keep a reference to our callbacks object
         this.callbacks = callbacks;
         // obtain an extension helpers object
@@ -54,11 +53,9 @@ public class BurpExtender implements IBurpExtender, IScannerCheck, ITab
         // register ourselves as a custom scanner check
         callbacks.registerScannerCheck(this);
 
-        SwingUtilities.invokeLater(new Runnable()
-        {
+        SwingUtilities.invokeLater(new Runnable() {
             @Override
-            public void run()
-            {
+            public void run() {
                 settings = new Settings(callbacks);
                 panel = new JPanel();
                 panel.setLayout(null);
@@ -70,7 +67,7 @@ public class BurpExtender implements IBurpExtender, IScannerCheck, ITab
 
                 model = new BurpTableModel(settings);
 
-                table=new JTable(model);
+                table = new JTable(model);
                 TableColumnModel columnModel = table.getColumnModel();
                 columnModel.getColumn(0).setPreferredWidth(65);
                 columnModel.getColumn(1).setPreferredWidth(330);
@@ -82,7 +79,7 @@ public class BurpExtender implements IBurpExtender, IScannerCheck, ITab
                 sp.setPreferredSize(new Dimension(400, 250));
 
                 deleteButton = new JButton(DELETE);
-                deleteButton.setBounds(58, 470, 130, 30  );
+                deleteButton.setBounds(58, 470, 130, 30);
                 panel.add(deleteButton);
                 panel.add(sp);
 
@@ -93,7 +90,7 @@ public class BurpExtender implements IBurpExtender, IScannerCheck, ITab
 
                 JLabel addLabel = new JLabel(ALLOWED_CONTENT_TYPE);
                 addLabel.setBounds(58, 150, 140, 16);
-                addLabel.setFont(new Font(label1.getFont().getName(), Font.PLAIN ,14));
+                addLabel.setFont(new Font(label1.getFont().getName(), Font.PLAIN, 14));
                 panel.add(addLabel);
                 addButton = new JButton(ADD);
                 addButton.setBounds(370, 143, 84, 30);
@@ -117,9 +114,7 @@ public class BurpExtender implements IBurpExtender, IScannerCheck, ITab
                 option3.setBounds(58, 83, 130, 20);
                 panel.add(option3);
 
-
                 initListener();
-
 
                 callbacks.customizeUiComponent(panel);
                 callbacks.addSuiteTab(BurpExtender.this);
@@ -127,47 +122,47 @@ public class BurpExtender implements IBurpExtender, IScannerCheck, ITab
         });
     }
 
-    //listener  initializations
-    private void initListener(){
+    // listener initializations
+    private void initListener() {
 
-        //add button
-        addButton.addActionListener(new ActionListener(){
+        // add button
+        addButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
                 String type = contetTtypeTextField.getText();
-                Object[] rowData = {Boolean.TRUE, type};
-                ((BurpTableModel)model).addRow(rowData);
+                Object[] rowData = { Boolean.TRUE, type };
+                ((BurpTableModel) model).addRow(rowData);
             }
         });
 
-        //delete button
-        deleteButton.addActionListener(new ActionListener(){
+        // delete button
+        deleteButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
                 int i = table.getSelectedRow();
-                if(i >= 0){
-                    ((BurpTableModel)model).removeRow(i);
+                if (i >= 0) {
+                    ((BurpTableModel) model).removeRow(i);
                 }
             }
         });
 
-        //table checkboxes
+        // table checkboxes
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int column = table.getSelectedColumn();
                 int row = table.getSelectedRow();
-                if(column == 0 && row >=0){
-                    Boolean value = (Boolean)model.getValueAt(row,column);
+                if (column == 0 && row >= 0) {
+                    Boolean value = (Boolean) model.getValueAt(row, column);
                     value = !value;
                     model.setValueAt(value, row, column);
                 }
             }
         });
 
-        //checkbox option
+        // checkbox option
         scopeOnly.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
@@ -175,7 +170,7 @@ public class BurpExtender implements IBurpExtender, IScannerCheck, ITab
             }
         });
 
-        //checkbox option
+        // checkbox option
         aggressiveMode.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -183,7 +178,7 @@ public class BurpExtender implements IBurpExtender, IScannerCheck, ITab
             }
         });
 
-        //checkbox option
+        // checkbox option
         checkContext.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -193,8 +188,7 @@ public class BurpExtender implements IBurpExtender, IScannerCheck, ITab
 
     }
 
-    private OptionPanel placeOption(String optionName)
-    {
+    private OptionPanel placeOption(String optionName) {
         JPanel panelOption = new JPanel();
         BoxLayout boxlayout = new BoxLayout(panelOption, BoxLayout.X_AXIS);
         panelOption.setLayout(boxlayout);
@@ -211,18 +205,14 @@ public class BurpExtender implements IBurpExtender, IScannerCheck, ITab
     }
 
     @Override
-    public String getTabCaption()
-    {
+    public String getTabCaption() {
         return PLUGIN_NAME;
     }
 
     @Override
-    public Component getUiComponent()
-    {
+    public Component getUiComponent() {
         return panel;
     }
-
-
 
     final class OptionPanel {
         private final JPanel panel;
@@ -242,163 +232,187 @@ public class BurpExtender implements IBurpExtender, IScannerCheck, ITab
         }
     }
 
-    // helper method to search a response for occurrences of a literal match string
-    // and return a list of start/end offsets
-    private List<int[]> getMatches(byte[] response, byte[] match)
-    {
-        List<int[]> matches = new ArrayList<int[]>();
+    // // helper method to search a response for occurrences of a literal match string
+    // // and return a list of start/end offsets
+    // private List<int[]> getMatches(byte[] response, byte[] match) {
+    //     List<int[]> matches = new ArrayList<int[]>();
 
-        int start = 0;
-        while (start < response.length)
-        {
-            start = helpers.indexOf(response, match, true, start, response.length);
-            if (start == -1)
-                break;
-            matches.add(new int[] { start, start + match.length });
-            start += match.length;
-        }
+    //     int start = 0;
+    //     while (start < response.length) {
+    //         start = helpers.indexOf(response, match, true, start, response.length);
+    //         if (start == -1)
+    //             break;
+    //         matches.add(new int[] { start, start + match.length });
+    //         start += match.length;
+    //     }
 
-        return matches;
-    }
+    //     return matches;
+    // }
 
     //
     // implement IScannerCheck
     //
 
-    private String buildIssueForReflection( Map param)
-    {
-        String reflectedIn = "";
-        reflectedIn+="<li>";
-        reflectedIn+=param.get(NAME);
-        reflectedIn+=" - reflected "+ String.valueOf(((List)param.get(MATCHES)).size())+" times ";
-        if (param.containsKey(VULNERABLE))
-        {
-            reflectedIn += "and allow the following characters: "+ String.valueOf(param.get(VULNERABLE));
-            if (settings.getCheckContext() && !String.valueOf(param.get(VULNERABLE)).contains(CONTEXT_VULN_FLAG))
-                return reflectedIn+ "</li>" ;
-            issueName = XSS_VULNERABLE;
+    private String buildIssueForReflection(Map param) {
+        String numOfReflections = "?";
+        if (param.containsKey(MATCHES)) {
+            int num = ((List) param.get(MATCHES)).size();
+            if (num > 0) {
+                numOfReflections = String.valueOf(num);
+            }
         }
-        return reflectedIn+ "</li>" ;
+
+        String reflectedIn = "<li>";
+        reflectedIn += param.get(NAME);
+        reflectedIn += " - reflected " + numOfReflections + " times ";
+        if (param.containsKey(VULNERABLE)) {
+            reflectedIn += "and allows: " + String.valueOf(param.get(VULNERABLE));
+        }
+
+        return reflectedIn + "</li>";
     }
 
     @Override
     public List<IScanIssue> doPassiveScan(IHttpRequestResponse baseRequestResponse) throws RuntimeException {
-        if ( this.settings.getScopeOnly() && !callbacks.isInScope(helpers.analyzeRequest(baseRequestResponse).getUrl()) )
+        URL requestUrl = helpers.analyzeRequest(baseRequestResponse).getUrl();
+        callbacks.printOutput("[+] Initialized " + requestUrl);
+`
+        // check scope
+        if (this.settings.getScopeOnly() && !callbacks.isInScope(requestUrl)) {
             return null;
+        }
+
         // check content type
+        if (settings.getEnabledContentTypes() == null) {
+            return null;
+        }
+
         String contentType = "";
-        for (String header: helpers.analyzeResponse(baseRequestResponse.getResponse()).getHeaders()) {
-            if (header.toLowerCase().contains("content-type: ")) {
-                contentType = header.toLowerCase().split(": ", 2)[1];
+        for (String header : helpers.analyzeResponse(baseRequestResponse.getResponse()).getHeaders()) {
+            header = header.toLowerCase();
+            if (header.startsWith("content-type: ")) {
+                contentType = header.substring(14); // "content-type: ".length() == 14
                 break;
             }
         }
-        if (settings.getEnabledContentTypes() == null)
-            return null;
+
         boolean isContentTypeAllowed = false;
-        for (String allowedContentType: settings.getEnabledContentTypes()) {
+        for (String allowedContentType : settings.getEnabledContentTypes()) {
             if (contentType.contains(allowedContentType)) {
                 contentType = allowedContentType;
                 isContentTypeAllowed = true;
                 break;
             }
         }
-        issueName = XSS_POSSIBLE;
-        // start analyze request
-        if ( isContentTypeAllowed )
-        {
-            //Initialize check reflections
-            this.checkReflection = new CheckReflection(settings, helpers, baseRequestResponse, callbacks);
-            List<Map> reflections = this.checkReflection.checkResponse();
-            if (!reflections.isEmpty())
-            {
-                // report the issue
-                String reflectedInBody = "";
-                String reflectedInHeader = "";
-                String reflectedInAll = "";
-                List<int[]> matches = new ArrayList<>();
-                List<Pair> pairs = new ArrayList<>();
-                for(Map param: reflections) {
 
-                    if(param.get(REFLECTED_IN).equals(BODY)){
-                        reflectedInBody+=buildIssueForReflection(param);
-                    }
-
-                    if(param.get(REFLECTED_IN).equals(HEADERS)){
-                        reflectedInHeader+=buildIssueForReflection(param);
-                    }
-
-
-                    if(param.get(REFLECTED_IN).equals(BOTH)){
-                        reflectedInAll+=buildIssueForReflection(param);
-                    }
-
-
-                    for (Object pair : (ArrayList)param.get(MATCHES)) {
-                        pairs.add(new Pair((int[]) pair));
-                    }
-                }
-                String START = ":<br><ul>";
-                String END = "</ul>";
-                String reflectedSummary = "";
-                if(!reflectedInHeader.equals(""))
-                    reflectedSummary+=DESCRIPTION_DETAILS + HEADERS+START+reflectedInHeader+END;
-                if(!reflectedInBody.equals(""))
-                    reflectedSummary+=DESCRIPTION_DETAILS + BODY + START + reflectedInBody+END;
-                if(!reflectedInAll.equals(""))
-                    reflectedSummary+=DESCRIPTION_DETAILS+BOTH+START+reflectedInAll+END;
-                Collections.sort(pairs, new Comparator<Pair>() {
-                    @Override
-                    public int compare(Pair o1, Pair o2) {
-                        if (o1.getStart() == o2.getStart())
-                            return 0;
-                        return o1.getStart() < o2.getStart() ? -1 : 1;
-                    }
-                });
-                int[] tmpPair = null;
-                for (Pair pair : pairs)
-                {
-                    if (tmpPair == null)
-                        tmpPair = pair.getPair();
-                    else if (tmpPair[1] > pair.getPair()[0])
-                        tmpPair[1] = pair.getPair()[1];
-                    else {
-                        matches.add(tmpPair);
-                        tmpPair = pair.getPair();
-                    }
-                }
-                if (tmpPair != null) {
-                    matches.add(tmpPair);
-                }
-                List<IScanIssue> issues = new ArrayList<>();
-                issues.add(new CustomScanIssue(
-                        baseRequestResponse.getHttpService(),
-                        helpers.analyzeRequest(baseRequestResponse).getUrl(),
-                        new IHttpRequestResponse[]{callbacks.applyMarkers(baseRequestResponse, null, matches)},
-                        issueName,
-                        reflectedSummary,
-                        getSeverity(issueName)));
-                return issues;
-            } else return null;
+        if (!isContentTypeAllowed) {
+            return null;
         }
-        else return null;
-    }
 
-    private String getSeverity(String issueName) {
-        return XSS_VULNERABLE.equals(issueName) ? "High" : "Medium";
+        // start analyze request
+        // Initialize check reflections
+        this.checkReflection = new CheckReflection(settings, helpers, baseRequestResponse, callbacks);
+        List<Map> reflections = this.checkReflection.checkResponse();
+        if (reflections.isEmpty()) {
+            return null;
+        }
+
+        // report the issue
+        issueName = XSS_POSSIBLE;
+        issueSeverity = "Low";
+
+        String reflectedInBody = "";
+        String reflectedInHeader = "";
+        String reflectedInAll = "";
+        List<Pair> pairs = new ArrayList<>();
+        for (Map param : reflections) {
+            if (param.get(REFLECTED_IN).equals(BODY)) {
+                reflectedInBody += buildIssueForReflection(param);
+            } else if (param.get(REFLECTED_IN).equals(HEADERS)) {
+                reflectedInHeader += buildIssueForReflection(param);
+            } else { // reflected in both header and body
+                reflectedInAll += buildIssueForReflection(param);
+            }
+
+            // match pairs
+            for (Object pair : (ArrayList)param.get(MATCHES)) {
+                pairs.add(new Pair((int[])pair));
+            }
+
+            // set severity and title if vulnerable
+            if (param.containsKey(VULNERABLE)) {
+                if (!settings.getCheckContext()
+                    || String.valueOf(param.get(VULNERABLE)).contains(CONTEXT_VULN_FLAG)
+                ) {
+                    issueName = XSS_VULNERABLE;
+                    issueSeverity = "High";
+                }
+            }
+        }
+
+        issueName += " at " + requestUrl.getPath() + "?" + requestUrl.getQuery();
+        String START = ":<br><ul>";
+        String END = "</ul>";
+        String reflectedSummary = "";
+        if (!reflectedInHeader.isEmpty())
+            reflectedSummary += DESCRIPTION_DETAILS + HEADERS + START + reflectedInHeader + END;
+        if (!reflectedInBody.isEmpty())
+            reflectedSummary += DESCRIPTION_DETAILS + BODY + START + reflectedInBody + END;
+        if (!reflectedInAll.isEmpty())
+            reflectedSummary += DESCRIPTION_DETAILS + "HEADERS AND BODY" + START + reflectedInAll + END;
+
+        // prepare matches
+        Collections.sort(pairs, new Comparator<Pair>() {
+            @Override
+            public int compare(Pair o1, Pair o2) {
+                return o1.getStart() - o2.getStart();
+            }
+        });
+
+        List<int[]> matches = new ArrayList<>();
+        int[] tmpPair = null;
+        for (Pair pair : pairs) {
+            if (tmpPair == null) {
+                tmpPair = pair.getPair();
+            } else if (tmpPair[1] > pair.getPair()[0]) {
+                tmpPair[1] = pair.getPair()[1];
+            } else {
+                matches.add(tmpPair);
+                tmpPair = pair.getPair();
+            }
+        }
+        if (tmpPair != null) {
+            matches.add(tmpPair);
+        }
+
+        List<IScanIssue> issues = new ArrayList<>();
+        issues.add(
+            new CustomScanIssue(
+                baseRequestResponse.getHttpService(),
+                requestUrl,
+                new IHttpRequestResponse[] {
+                    callbacks.applyMarkers(baseRequestResponse, null, matches)
+                },
+                issueName,
+                reflectedSummary,
+                issueSeverity
+            )
+        );
+
+        // callbacks.printOutput("[+] Found " + issues.size() + " issues");
+
+        return issues;
     }
 
     @Override
-    public List<IScanIssue> doActiveScan(IHttpRequestResponse baseRequestResponse, IScannerInsertionPoint insertionPoint)
-    {
+    public List<IScanIssue> doActiveScan(IHttpRequestResponse baseRequestResponse,
+            IScannerInsertionPoint insertionPoint) {
         return null;
     }
 
     @Override
-    public int consolidateDuplicateIssues(IScanIssue existingIssue, IScanIssue newIssue)
-    {
-        if (existingIssue.getIssueDetail().equals(newIssue.getIssueDetail()))
-        {
+    public int consolidateDuplicateIssues(IScanIssue existingIssue, IScanIssue newIssue) {
+        if (existingIssue.getIssueDetail().equals(newIssue.getIssueDetail())) {
             return -1;
         } else {
             return 0;
@@ -409,8 +423,7 @@ public class BurpExtender implements IBurpExtender, IScannerCheck, ITab
 //
 // class implementing IScanIssue to hold our custom scan issue details
 //
-class CustomScanIssue implements IScanIssue
-{
+class CustomScanIssue implements IScanIssue {
     private IHttpService httpService;
     private URL url;
     private IHttpRequestResponse[] httpMessages;
@@ -424,8 +437,7 @@ class CustomScanIssue implements IScanIssue
             IHttpRequestResponse[] httpMessages,
             String name,
             String detail,
-            String severity)
-    {
+            String severity) {
         this.httpService = httpService;
         this.url = url;
         this.httpMessages = httpMessages;
@@ -435,68 +447,57 @@ class CustomScanIssue implements IScanIssue
     }
 
     @Override
-    public URL getUrl()
-    {
+    public URL getUrl() {
         return url;
     }
 
     @Override
-    public String getIssueName()
-    {
+    public String getIssueName() {
         return name;
     }
 
     @Override
-    public int getIssueType()
-    {
+    public int getIssueType() {
         return 0;
     }
 
     @Override
-    public String getSeverity()
-    {
+    public String getSeverity() {
         return severity;
     }
 
     @Override
-    public String getConfidence()
-    {
+    public String getConfidence() {
         return "Certain";
     }
 
     @Override
-    public String getIssueBackground()
-    {
+    public String getIssueBackground() {
         return null;
     }
 
     @Override
-    public String getRemediationBackground()
-    {
+    public String getRemediationBackground() {
         return null;
     }
 
     @Override
-    public String getIssueDetail()
-    {
+    public String getIssueDetail() {
         return detail;
     }
 
     @Override
-    public String getRemediationDetail()
-    {
+    public String getRemediationDetail() {
         return null;
     }
 
     @Override
-    public IHttpRequestResponse[] getHttpMessages()
-    {
+    public IHttpRequestResponse[] getHttpMessages() {
         return httpMessages;
     }
 
     @Override
-    public IHttpService getHttpService()
-    {
+    public IHttpService getHttpService() {
         return httpService;
     }
 
