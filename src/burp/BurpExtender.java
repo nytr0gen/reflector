@@ -276,7 +276,7 @@ public class BurpExtender implements IBurpExtender, IScannerCheck, ITab {
     public List<IScanIssue> doPassiveScan(IHttpRequestResponse baseRequestResponse) throws RuntimeException {
         URL requestUrl = helpers.analyzeRequest(baseRequestResponse).getUrl();
         callbacks.printOutput("[+] Initialized " + requestUrl);
-`
+
         // check scope
         if (this.settings.getScopeOnly() && !callbacks.isInScope(requestUrl)) {
             return null;
