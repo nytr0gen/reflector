@@ -206,7 +206,7 @@ class Aggressive {
         this.baseRequestResponse = baseRequestResponse;
         this.host = helpers.analyzeRequest(baseRequestResponse).getUrl().getHost();
         this.port = helpers.analyzeRequest(baseRequestResponse).getUrl().getPort();
-        this.pattern = Pattern.compile(PAYLOAD_GREP + "([_%&;\"'<#\\\\0-9a-z ]{1,25}?)" + PAYLOAD_GREP);
+        this.pattern = Pattern.compile(PAYLOAD_GREP + "([_%&;\"'<#\\\\0-9a-z ]{1,25}?)" + PAYLOAD_GREP, Pattern.CASE_INSENSITIVE);
         this.settings = settings;
     }
 
