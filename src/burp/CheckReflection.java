@@ -61,7 +61,7 @@ public class CheckReflection {
             paramDescription.put(MATCHES, new ArrayList<>());
             paramDescription.put(REFLECTED_IN, BODY); // default
             // String paramValue = helpers.bytesToString(paramValueBytes);
-            if (paramValueBytes.length > 2) {
+            if (paramValueBytes.length > 0) { // TODO: testing parameters shorter than 3 chars
                 List<int[]> listOfMatches = getMatches(iHttpRequestResponse.getResponse(), paramValueBytes);
                 if (!listOfMatches.isEmpty()) {
                     paramDescription.put(MATCHES, listOfMatches);
@@ -214,10 +214,10 @@ class Aggressive {
         String testRequest = "",
                 symbols = "";
         for (Map param : reflectedParams) {
-            // skip cookie params - might reconsider later
-            if ((byte)param.get(TYPE) == IParameter.PARAM_COOKIE) {
-                continue;
-            }
+            // // skip cookie params - might reconsider later
+            // if ((byte)param.get(TYPE) == IParameter.PARAM_COOKIE) {
+            //     continue;
+            // }
 
             testRequest = prepareRequest(param);
             symbols = checkResponse(testRequest);
@@ -231,7 +231,7 @@ class Aggressive {
 
     public static String prepareReflectedPayload(String value) {
         return value.replaceAll("[^<\"' \\\\]", "")
-            .replaceAll("[\\\\]", "");
+            .replaceAll("(\\\\)", "");
             // .replaceAll("(\\\\\"|\\\\')", "")
     }
 

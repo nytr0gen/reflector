@@ -95,18 +95,24 @@ public class BurpExtender implements IBurpExtender, IScannerCheck, ITab {
                 addButton = new JButton(ADD);
                 addButton.setBounds(370, 143, 84, 30);
                 panel.add(addButton);
+
+                // Field - Scope Only
                 BurpExtender.OptionPanel optionPanel1 = placeOption(SCOPE_ONLY);
                 JPanel option1 = optionPanel1.getPanel();
                 scopeOnly = optionPanel1.getCheckBox();
                 scopeOnly.setSelected(settings.getScopeOnly());
                 option1.setBounds(58, 43, 130, 20);
                 panel.add(option1);
+
+                // Field - Aggressive Mode
                 BurpExtender.OptionPanel optionPanel2 = placeOption(AGGRESSIVE_MODE);
                 JPanel option2 = optionPanel2.getPanel();
                 aggressiveMode = optionPanel2.getCheckBox();
                 aggressiveMode.setSelected(settings.getAggressiveMode());
                 option2.setBounds(58, 63, 135, 20);
                 panel.add(option2);
+
+                // Field - Check Context
                 BurpExtender.OptionPanel optionPanel3 = placeOption(CHECK_CONTEXT);
                 JPanel option3 = optionPanel3.getPanel();
                 checkContext = optionPanel3.getCheckBox();
